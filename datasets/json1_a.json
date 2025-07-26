@@ -1,0 +1,3 @@
+{"id": 1, "name": "Sarah Johnson", "address": {"line1":"4321 Oak Street Apartment","line2":"304 Los Angeles", "state":"CA", "zip":90001}, "email":"sarah_johnson478@gmail.com", "weight": 140.50}
+{"id": 2, "name": "David Martinez", "address": {"line1":"789 Maple Avenue ","line2":"Suite 102 New York","state":"NY","zip":10001},   "email":"david_martinez431@gmail.com", "weight": 155.0}
+{"id": 3, "name": "Emily Wilson", "address": {"line1":"567 Pine Road Unit 5B Chicago", "state":"IL", "zip":60601}, "email":"emily_wilson998@gmail.com", "weight": 200.1}

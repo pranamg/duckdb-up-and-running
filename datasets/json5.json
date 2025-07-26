@@ -1,0 +1,12 @@
+[
+    {
+        "id": 3,        
+        "name": "Emily Wilson",             
+        "address": {
+            "line1":"567 Pine Road Unit 5B Chicago",
+            "state":"IL",
+            "zip":60601
+        },
+        "height": 66
+    }
+]

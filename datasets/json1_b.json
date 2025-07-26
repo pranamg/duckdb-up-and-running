@@ -1,0 +1,21 @@
+{
+    "id": 1,
+    "name": "Sarah Johnson",
+    "address": "4321 Oak Street Apartment 304 Los Angeles, CA 90001",
+    "email":"sarah_johnson478@gmail.com",
+    "weight": 140.50
+}
+{
+    "id": 2,
+    "name": "David Martinez",
+    "address": "789 Maple Avenue Suite 102 New York, NY 10001",
+    "email":"david_martinez431@gmail.com",
+    "weight": 155.0
+}
+{
+    "id": 3,
+    "name": "Emily Wilson",
+    "address": "567 Pine Road Unit 5B Chicago, IL 60601",
+    "email":"emily_wilson998@gmail.com",
+    "weight": 200.1
+}
