@@ -1,0 +1,7 @@
+duckdb
+fastparquet
+pandas
+ipython
+ipykernel
+mysql-connector-python
+-- Tad - viewer for CSV, Parquet, SQLite, and DuckDB databases - https://github.com/antonycourtney/tad/releases/
