@@ -18,6 +18,7 @@ toml
 matplotlib
 seaborn
 keyring
+huggingface_hub
 conda install mysqlclient -c conda-forge -y
 # Optional tools (not Python packages)
 # Tad - viewer for CSV, Parquet, SQLite, and DuckDB databases - https://github.com/antonycourtney/tad/releases/
