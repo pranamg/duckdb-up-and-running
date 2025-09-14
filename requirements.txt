@@ -8,5 +8,9 @@ mysql-connector-python
 graphviz
 pyarrow
 folium
+shapely
+leafmap
+mapclassify
+geopandas
 -- Tad - viewer for CSV, Parquet, SQLite, and DuckDB databases - https://github.com/antonycourtney/tad/releases/
 -- graphviz - download and install from https://graphviz.gitlab.io/_pages/Download/Download_windows.html
