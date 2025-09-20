@@ -1,0 +1,410 @@
+-- %% MD | unnamed
+# Chapter 3. A Primer on SQL
+-- %% MD | unnamed
+## Using the DuckDB CLI
+-- %% SQL_RAW | unnamed
+-- Linux Command to install DuckDB CLI
+%curl https://install.duckdb.org | sh
+-- %% SQL_RAW | unnamed
+# Windows Command to install DuckDB CLI
+%powershell -Command "winget install DuckDb.cli"
+-- %% SQL_RAW | unnamed
+#MacOS Command to install DuckDB CLI
+%brew install duckdb
+-- %% SQL_RAW | unnamed
+duckdb [OPTIONS] [FILENAME]
+duckdb [OPTIONS] [FILENAME] [SQL]
+-- From DuckDB CLI 1.4.0 onwards, you can also use the shorthand:
+duckdb [OPTIONS] [FILENAME] -c [SQL]
+-- for CSV
+duckdb './datasets/AAPL.csv' -c 'FROM AAPL;'
+-- for Parquet
+duckdb './datasets/flights/airports_all.parquet' -c 'FROM airports_all;'
+-- for JSON
+duckdb './datasets/people.json' -c 'FROM people;'
+-- %% SQL_RAW | unnamed
+-- Create a temporary directory for DuckDB files when using isql files in DuckLab extension
+%mkdir -p /tmp/ducklab
+-- %% SQL_RAW | unnamed
+duckdb -help
+-- %% SQL_RAW | unnamed
+-- If you don't supply a FILENAME argument, the DuckDB CLI will open a temperory in-memory database and a prompt starting with a D:
+%duckdb
+-- To exit the DuckDB CLI, type .exit or .quit or press Ctrl+C twice on macOS and Linux or press Ctrl+C once on Windows.
+-- %% SQL_RAW | unnamed
+-- To create or open a persistent database, provide a filename as an argument:
+duckdb './mydb.duckdb'
+-- %% MD | unnamed
+## Importing Data into DuckDB
+-- %% SQL_RAW | unnamed
+CREATE TABLE airlines as FROM './datasets/flights/airlines.csv';
+-- %% SQL_RAW | unnamed
+show tables;
+-- %% SQL_RAW | unnamed
+SELECT * FROM airlines;
+-- %% MD | unnamed
+## Dot Commands
+-- %% SQL_RAW | unnamed
+-- While normal DuckDB queries require a semicolon at the end of the statement, dot commands do not.
+-- To view a list of dot commands available within the DuckDB CLI, type:
+.help
+-- %% SQL_RAW | unnamed
+-- To view the current database in use, type:
+.database
+-- %% SQL_RAW | unnamed
+--To open an existing (or new) DuckDB database, type:
+.open mydb2.duckdb
+-- %% SQL_RAW | unnamed
+CREATE TABLE airports as FROM './datasets/flights/airports.csv';
+-- %% SQL_RAW | unnamed
+show tables;
+-- %% SQL_RAW | unnamed
+-- The .open command closes the existing database and opens a new one. If you want to keep the current database open and work with an additoinal one, use the ATTACH statement:
+ATTACH './mydb.duckdb';
+-- %% SQL_RAW | unnamed
+ATTACH 'mydb.duckdb' as mydb;
+-- %% SQL_RAW | unnamed
+-- To verify the list of databases, type:
+.database
+-- %% SQL_RAW | unnamed
+- To use a particular attached database, use the USE statement and specify the alias of the database you want to use
+USE mydb2;
+-- %% SQL_RAW | unnamed
+-- If you want ot quickly look at all the tables you have in your databases, type:  
+.table
+-- %% SQL_RAW | unnamed
+-- If you want to render the content of a table as SQL statements, type:
+.dump airports
+-- %% SQL_RAW | unnamed
+-- To execute SQL commands from a file, use the .read command:
+-- %% SQL_RAW | unnamed
+CREATE TABLE airports2 as FROM './datasets/flights/airports.csv';
+SELECT * FROM airports2;
+-- %% SQL_RAW | unnamed
+.read commands.sql
+-- %% SQL_RAW | unnamed
+.exit
+-- %% MD | unnamed
+## Persisting the In-Memory Database on Disk
+-- %% SQL_RAW | unnamed
+duckdb
+-- %% SQL_RAW | unnamed
+CREATE OR REPLACE TABLE airports as FROM read_csv_auto('./datasets/flights/airports.csv');
+-- %% SQL_RAW | unnamed
+-- To persist the in-memory database on disk, use the EXPORT DATABASE command:
+EXPORT DATABASE './airports_db';
+-- %% SQL_RAW | unnamed
+-- load.sql file with the statement to load the CSV file into the table.
+COPY airports FROM 'airports_db/airports.csv' (FORMAT 'csv', quote '"',
+delimiter ',', header 1);
+-- %% SQL_RAW | unnamed
+-- schema.sql file to create the airports table in the database.
+CREATE OR REPLACE TABLE airports(IATA_CODE VARCHAR, AIRPORT VARCHAR,
+  CITY VARCHAR, STATE VARCHAR, COUNTRY VARCHAR, LATITUDE DOUBLE,
+  LONGITUDE DOUBLE);
+-- %% SQL_RAW | unnamed
+.exit
+-- %% SQL_RAW | unnamed
+duckdb mydb3.duckdb
+-- %% SQL_RAW | unnamed
+IMPORT DATABASE 'airports_db';
+-- %% SQL_RAW | unnamed
+show tables;
+-- %% SQL_RAW | unnamed
+.exit
+-- %% MD | unnamed
+## DuckDB SQL Primer
+-- %% MD | unnamed
+### Creating a Database
+-- %% SQL_RAW | unnamed
+duckdb library.duckdb
+-- %% MD | unnamed
+### Creating Tables
+-- %% SQL_RAW | unnamed
+CREATE TABLE Authors (
+    author_id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    nationality TEXT,
+    birth_year INTEGER
+);
+
+CREATE TABLE Borrowers (
+    borrower_id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT,
+    member_since DATE
+);
+
+CREATE TABLE Books (
+    book_id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    author_id INTEGER NOT NULL,
+    genre TEXT,
+    publication_year INTEGER,
+    FOREIGN KEY (author_id) REFERENCES Authors(author_id)
+);
+
+CREATE TABLE Borrowings (
+    borrowing_id INTEGER PRIMARY KEY,
+    book_id INTEGER NOT NULL,
+    borrower_id INTEGER NOT NULL,
+    borrow_date DATE,
+    return_date DATE,
+    status TEXT,
+    FOREIGN KEY (book_id) REFERENCES Books(book_id),
+    FOREIGN KEY (borrower_id) REFERENCES Borrowers(borrower_id)
+);
+-- %% SQL_RAW | unnamed
+show tables;
+-- %% MD | unnamed
+### Viewing the Schemas of Tables
+-- %% SQL_RAW | unnamed
+DESCRIBE Authors;
+-- %% SQL_RAW | unnamed
+SHOW Authors;
+-- %% SQL_RAW | unnamed
+.schema
+-- %% MD | unnamed
+### Dropping a Table
+-- %% SQL_RAW | unnamed
+CREATE TABLE OverdueBorrowers (
+    borrower_id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT,
+    member_since DATE
+);
+
+DROP TABLE OverdueBorrowers;
+-- %% MD | unnamed
+### Working with Tables
+-- %% MD | unnamed
+#### Populating Tables with Rows
+-- %% SQL_RAW | unnamed
+INSERT INTO Authors (author_id, name, nationality, birth_year) VALUES
+    (1, 'Jane Austen', 'British', 1775),
+    (2, 'Charles Dickens', 'British', 1812),
+    (3, 'Agatha Christie', 'British', 1890),
+    (4, 'J.K. Rowling', 'British', 1965),
+    (5, 'Tolkien', 'British', 1892);
+-- %% SQL_RAW | unnamed
+INSERT INTO Authors (author_id, name, nationality, birth_year)
+VALUES (6, 'Mark Twain', 'American', 1835);
+-- %% SQL_RAW | unnamed
+SELECT * FROM Authors;
+-- %% SQL_RAW | unnamed
+INSERT INTO Borrowers (borrower_id, name, email, member_since)
+VALUES
+(1, 'John Smith', 'john.smith@example.com', '2022-01-01'),
+(2, 'Emma Johnson', 'emma.johnson@example.com', '2021-12-15'),
+(3, 'Michael Brown', 'michael.brown@example.com', '2022-02-20'),
+(4, 'Sophia Wilson', 'sophia.wilson@example.com', '2022-03-10'),
+(5, 'William Taylor', 'william.taylor@example.com', '2022-04-05'),
+(6, 'Jane Doe', 'jane.doe@example.com', '2022-03-05');
+-- %% SQL_RAW | unnamed
+SELECT * FROM Borrowers;
+-- %% SQL_RAW | unnamed
+INSERT INTO Books (book_id, title, author_id, genre, publication_year)
+VALUES
+(1, 'Pride and Prejudice', 1, 'Classic', 1813),
+(2, 'Oliver Twist', 2, 'Novel', 1837),
+(3, 'Murder on the Orient Express', 3, 'Mystery', 1934),
+(4, 'Harry Potter and the Philosopher''s Stone', 4, 'Fantasy', 1997),
+(5, 'The Hobbit', 5, 'Fantasy', 1937);
+-- %% SQL_RAW | unnamed
+SELECT * FROM Books;
+-- %% SQL_RAW | unnamed
+INSERT INTO Borrowings (borrowing_id, book_id, borrower_id,
+borrow_date, return_date, status)
+VALUES
+(1, 1, 1, '2022-04-10', '2022-04-25', 'Returned'),
+(2, 3, 2, '2022-03-20', NULL, 'On Loan'),
+(3, 4, 3, '2022-04-05', NULL, 'On Loan'),
+(4, 2, 4, '2022-04-15', NULL, 'On Loan'),
+(5, 5, 5, '2022-03-30', '2022-04-20', 'Returned'),
+(6, 1, 3, '2022-04-26', NULL, 'On Loan');
+-- %% SQL_RAW | unnamed
+SELECT * FROM Borrowings;
+-- %% MD | unnamed
+#### Updating Rows
+-- %% SQL_RAW | unnamed
+UPDATE Borrowings
+SET return_date = '2022-04-05',
+    status = 'Returned'
+WHERE borrowing_id = 3;
+-- %% SQL_RAW | unnamed
+SELECT * FROM Borrowings;
+-- %% MD | unnamed
+#### Deleting Rows
+-- %% SQL_RAW | unnamed
+DELETE FROM Borrowers
+WHERE name = 'Jane Doe';
+-- %% SQL_RAW | unnamed
+SELECT * FROM borrowers;
+-- %% SQL_RAW | unnamed
+DELETE FROM Borrowers
+WHERE name LIKE 'Jane%';
+-- %% SQL_RAW | unnamed
+DELETE FROM Borrowers
+WHERE borrower_id = 6;
+-- %% MD | unnamed
+#### Querying Tables
+-- %% SQL_RAW | unnamed
+SELECT *
+FROM Authors
+WHERE (YEAR(CURRENT_DATE) - birth_year) > 100;
+-- %% SQL_RAW | unnamed
+SELECT *
+FROM Books
+WHERE genre = 'Fantasy';
+-- %% SQL_RAW | unnamed
+SELECT *
+FROM Borrowers
+WHERE member_since >= '2022-01-01';
+-- %% MD | unnamed
+### Joining Tables
+-- %% MD | unnamed
+#### Left outer Join (Left Join)
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, a.name
+FROM Books b
+LEFT JOIN Authors a ON b.author_id = a.author_id;
+-- %% SQL_RAW | unnamed
+SELECT a.name, b.book_id, b.title
+FROM Authors a
+LEFT JOIN Books b on a.author_id = b.author_id;
+-- %% MD | unnamed
+#### Right Join
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, a.name
+FROM Books b
+RIGHT JOIN Authors a ON b.author_id = a.author_id;
+-- %% MD | unnamed
+#### Inner Join
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, a.name
+FROM Books b
+INNER JOIN Authors a ON b.author_id = a.author_id;
+-- %% MD | unnamed
+#### Full Join
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, a.name
+FROM Books b
+FULL JOIN Authors a ON b.author_id = a.author_id;
+-- %% MD | unnamed
+#### Multiple Table Joins
+-- %% SQL_RAW | unnamed
+SELECT b.title AS book_title
+FROM Books b
+INNER JOIN Borrowings br ON b.book_id = br.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE bw.name = 'John Smith';
+-- %% SQL_RAW | unnamed
+SELECT bw.name AS borrower_name, b.title AS book_title
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id;
+-- %% SQL_RAW | unnamed
+-- To display results in a consistent order, add an ORDER BY clause:
+SELECT bw.name AS borrower_name, b.title AS book_title
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON
+br.borrower_id = bw.borrower_id
+ORDER BY bw.name, b.title;
+-- %% SQL_RAW | unnamed
+SELECT bw.name AS borrower_name, b.title AS book_title, a.name AS author_name
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+INNER JOIN Authors a ON b.author_id = a.author_id;
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, br.borrow_date, br.return_date
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE bw.name = 'Michael Brown';
+-- %% MD | unnamed
+### Aggregating Data
+-- %% SQL_RAW | unnamed
+SELECT bw.name AS borrower_name, COUNT(br.book_id) AS books_borrowed
+FROM Borrowings br
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+GROUP BY bw.name
+ORDER BY bw.name;
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title AS book_name, COUNT(*) AS num_borrowings
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+GROUP BY b.book_id, b.title
+ORDER BY num_borrowings DESC
+LIMIT 1;
+-- %% SQL_RAW | unnamed
+SELECT AVG(YEAR(CURRENT_DATE) - birth_year) AS average_age_of_authors
+FROM Authors;
+-- %% SQL_RAW | unnamed
+SELECT AVG(publication_year) AS avg_publication_year
+FROM Books;
+-- %% SQL_RAW | unnamed
+SELECT name, birth_year, YEAR(CURRENT_DATE) - birth_year AS age
+FROM Authors
+WHERE birth_year = (SELECT MIN(birth_year) FROM Authors);
+-- %% MD | unnamed
+### Analytics
+-- %% SQL_RAW | unnamed
+SELECT bw.name AS borrower_name, b.title AS book_title, br.borrow_date, br.return_date, DATEDIFF('day', br.borrow_date, br.return_date) - 14 AS overdue
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE br.return_date IS NOT NULL AND
+DATEDIFF('day', br.borrow_date, br.return_date) > 14;
+-- %% SQL_RAW | unnamed
+CREATE VIEW overdue_borrowings AS
+SELECT bw.name AS borrower_name,
+  b.title AS book_title,
+  br.borrow_date,
+  br.return_date,
+  DATEDIFF('day', br.borrow_date, br.return_date) - 14 AS overdue
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE br.return_date IS NOT NULL
+AND DATEDIFF('day', br.borrow_date, br.return_date) > 14;
+-- %% SQL_RAW | unnamed
+SELECT * FROM overdue_borrowings;
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, bw.name AS borrower_name, br.borrow_date, DATEDIFF('day', br.borrow_date, CURRENT_DATE()) - 14 AS overdue
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE br.return_date IS NULL AND
+DATEDIFF('day', br.borrow_date, CURRENT_DATE()) > 14;
+-- %% SQL_RAW | unnamed
+SELECT b.book_id, b.title, bw.name AS borrower_name, br.borrow_date, DATEDIFF('day', br.borrow_date, '2022-06-10') - 14 AS overdue
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE br.return_date IS NULL AND
+DATEDIFF('day', br.borrow_date, '2022-06-10') > 14;
+-- %% SQL_RAW | unnamed
+-- Innermost SELECT Statement is executed first followed by Intermediate SELECT Statement and then Outer WHERE clause and then Outer SELECT statement
+SELECT b.book_id, b.title AS book_name, bw.name AS borrower_name, br.borrow_date AS loan_date, br.return_date
+FROM Borrowings br
+INNER JOIN Books b ON br.book_id = b.book_id
+INNER JOIN Borrowers bw ON br.borrower_id = bw.borrower_id
+WHERE b.book_id IN (
+  SELECT book_id
+    FROM Borrowings
+  GROUP BY book_id
+  HAVING COUNT(*) = (
+    SELECT MAX(num_borrowings)
+    FROM (
+      SELECT COUNT(*) AS num_borrowings
+      FROM Borrowings
+      GROUP BY book_id
+    ) AS counts
+  )
+)
+GROUP BY b.book_id, b.title, br.borrower_id, bw.name, br.borrow_date,
+br.return_date;
+-- %% SQL_RAW | unnamed
+
